@@ -21,13 +21,25 @@ class MyEvent implements ShouldBroadcast
         $this->message = $message;
     }
 
-    public function broadcastOn()
-    {
-        return ['my-channel'];
-    }
+    // public function broadcastOn()
+    // {
+    //     return ['my-channel'];
+    // }
 
     public function broadcastAs()
     {
         return 'my-event';
+    }
+
+
+    public function broadcastOn()
+    {
+        info($this->message);
+  
+        return [
+            new PrivateChannel('chat.' . $this->message['receiver_id']),
+            new PrivateChannel('chat.' . $this->message['userIds'])
+        
+        ];
     }
 }

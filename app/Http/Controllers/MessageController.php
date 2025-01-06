@@ -20,7 +20,9 @@ class MessageController extends Controller
     {
         
 
-        event(new MyEvent($request->all()));
+        // event(new MyEvent($request->all()) );
+
+        broadcast(new MyEvent($request->all()) )->toOthers();
 
         $validated = $request->validate([
             // 'sender_id' => 'required|exists:users,id',

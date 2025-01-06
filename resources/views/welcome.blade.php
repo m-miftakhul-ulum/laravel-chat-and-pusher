@@ -51,16 +51,7 @@
                     <button class="btn btn-sm btn-ghost">Options</button>
                 </div>
                 <div id="chat-container" class="flex-1 overflow-y-auto p-4 bg-base-200">
-                    <!-- Messages -->
-                    <div class="chat chat-start">
-                        <div class="chat-bubble">Hi there!</div>
-                    </div>
-                    <div class="chat chat-end">
-                        <div class="chat-bubble chat-bubble-primary">Hello! How can I help you?</div>
-                    </div>
-                    <div class="chat chat-start">
-                        <div class="chat-bubble">I'm looking for some info.</div>
-                    </div>
+                    
                 </div>
                 <div class="p-4 bg-base-100 flex items-center space-x-3 border-t">
 
@@ -75,29 +66,57 @@
 
 
     <script>
-        Pusher.logToConsole = true;
+        // Pusher.logToConsole = true;
 
-        var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-            cluster: 'ap1'
-        });
+        // var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+        //     cluster: 'ap1'
+        // });
 
-        var channel = pusher.subscribe('my-channel');
-        channel.bind('my-event', function(data) {
+        // var channel = pusher.subscribe('my-channel');
+        // channel.bind('my-event', function(data) {
 
+        //     $('#chat-container').append(`
+        //     <div class="chat chat-start ${data.message.receiver_id != {{ auth()->user()->id }} ? 'chat-end' : 'chat-start' } ">
 
+        //         <div class="chat-bubble ${data.message.receiver_id != {{ auth()->user()->id }} ? 'chat-bubble-primary' : '' } ">
+        //             ${data.message.message}
+        //         </div>
+        //     </div>
+        // `);
 
-            $('#chat-container').append(`
-            <div class="chat chat-start ${data.message.receiver_id != {{ auth()->user()->id }} ? 'chat-end' : 'chat-start' } ">
-
-                <div class="chat-bubble ${data.message.receiver_id != {{ auth()->user()->id }} ? 'chat-bubble-primary' : '' } ">
-                    ${data.message.message}
-                </div>
-            </div>
-        `);
-
-        });
+        // });
 
         let userId = 0;
+
+        var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+            cluster: 'ap1',
+            authEndpoint: '/broadcasting/auth', 
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            }
+        });
+
+        var userIds = {{ auth()->user()->id }};
+        var channel = pusher.subscribe('private-chat.' + userIds);
+
+        channel.bind('my-event', function(data) {
+            if (userId == data.message.receiver_id) {
+
+            console.log(data, userId);
+                $('#chat-container').append(`
+                    <div class="chat chat-start ${data.message.receiver_id != userIds ? 'chat-end' : 'chat-start'} ">
+                        <div class="chat-bubble ${data.message.receiver_id != userIds ? 'chat-bubble-primary' : ''}">
+                            ${data.message.message}
+                        </div>
+                    </div>
+                `);
+            }
+        });
+
+
+
 
         loadChat = (id, name) => {
             userId = id;
@@ -145,6 +164,7 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 data: {
+                    userIds,
                     message,
                     receiver_id
                 },
